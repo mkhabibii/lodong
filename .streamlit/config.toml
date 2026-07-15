@@ -1,0 +1,7 @@
+[server]
+# Exclude heavy folders from Streamlit file watcher to prevent high CPU usage and lag
+folderWatchBlacklist = ["venv", ".venv", "env", ".git"]
+gatherUsageStats = false
+
+[browser]
+gatherUsageStats = false
