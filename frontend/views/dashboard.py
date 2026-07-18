@@ -22,7 +22,7 @@ def show_dashboard_page():
     import matplotlib.pyplot as plt
     import seaborn as sns
     
-    st.markdown('<div class="main-title">📊 Dashboard Analisis Data Mining</div>', unsafe_allow_html=True)
+    st.title("Dashboard Analisis Data Mining", anchor=False)
     st.markdown('<div class="subtitle">Eksplorasi wawasan data (EDA) dari 17.880 data lowongan kerja asli dan palsu</div>', unsafe_allow_html=True)
     
     df, is_loaded = load_dataset()
@@ -47,36 +47,36 @@ def show_dashboard_page():
     with col1:
         st.markdown(f"""
         <div class="glass-card" style="text-align: center; padding: 15px;">
-            <p style="margin: 0; color: #94a3b8; font-size: 0.9rem;">TOTAL DATASET</p>
+            <p style="margin: 0; color: #475569; font-size: 0.9rem; font-weight: 600;">TOTAL DATASET</p>
             <h2 style="margin: 5px 0 0 0; color: #6366f1; font-size: 2.2rem;">{total_data:,}</h2>
-            <p style="margin: 5px 0 0 0; color: #64748b; font-size: 0.8rem;">Lowongan Kerja</p>
+            <p style="margin: 5px 0 0 0; color: #475569; font-size: 0.8rem;">Lowongan Kerja</p>
         </div>
         """, unsafe_allow_html=True)
         
     with col2:
         st.markdown(f"""
         <div class="glass-card" style="text-align: center; padding: 15px;">
-            <p style="margin: 0; color: #94a3b8; font-size: 0.9rem;">LOWONGAN ASLI</p>
+            <p style="margin: 0; color: #475569; font-size: 0.9rem; font-weight: 600;">LOWONGAN ASLI</p>
             <h2 style="margin: 5px 0 0 0; color: #10b981; font-size: 2.2rem;">{real_data:,}</h2>
-            <p style="margin: 5px 0 0 0; color: #10b981; font-size: 0.8rem;">{(real_data/total_data*100):.2f}% dari total</p>
+            <p style="margin: 5px 0 0 0; color: #10b981; font-size: 0.8rem; font-weight: 600;">{(real_data/total_data*100):.2f}% dari total</p>
         </div>
         """, unsafe_allow_html=True)
         
     with col3:
         st.markdown(f"""
         <div class="glass-card" style="text-align: center; padding: 15px;">
-            <p style="margin: 0; color: #94a3b8; font-size: 0.9rem;">LOWONGAN PALSU</p>
+            <p style="margin: 0; color: #475569; font-size: 0.9rem; font-weight: 600;">LOWONGAN PALSU</p>
             <h2 style="margin: 5px 0 0 0; color: #f43f5e; font-size: 2.2rem;">{fake_data:,}</h2>
-            <p style="margin: 5px 0 0 0; color: #f43f5e; font-size: 0.8rem;">{ratio_fake:.2f}% dari total</p>
+            <p style="margin: 5px 0 0 0; color: #f43f5e; font-size: 0.8rem; font-weight: 600;">{ratio_fake:.2f}% dari total</p>
         </div>
         """, unsafe_allow_html=True)
         
     with col4:
         st.markdown(f"""
         <div class="glass-card" style="text-align: center; padding: 15px;">
-            <p style="margin: 0; color: #94a3b8; font-size: 0.9rem;">DATA BALANCE (RUS)</p>
+            <p style="margin: 0; color: #475569; font-size: 0.9rem; font-weight: 600;">DATA BALANCE (RUS)</p>
             <h2 style="margin: 5px 0 0 0; color: #fbbf24; font-size: 2.2rem;">1,732</h2>
-            <p style="margin: 5px 0 0 0; color: #fbbf24; font-size: 0.8rem;">Digunakan saat training (50:50)</p>
+            <p style="margin: 5px 0 0 0; color: #fbbf24; font-size: 0.8rem; font-weight: 600;">Digunakan saat training (50:50)</p>
         </div>
         """, unsafe_allow_html=True)
 

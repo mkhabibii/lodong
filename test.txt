@@ -1,5 +1,0 @@
-Ini adalah file test commit
-source venv/Scripts/activate
-streamlit run app.py
-python -m py_compile frontend/views/landing.py
-

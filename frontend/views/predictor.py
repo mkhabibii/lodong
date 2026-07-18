@@ -139,7 +139,7 @@ def get_country_display(code):
 def show_predictor_page(model, encoders):
     """Renders the prediction page using the original Streamlit form layout."""
     
-    st.markdown('<div class="main-title">Deteksi Lowongan Kerja Palsu</div>', unsafe_allow_html=True)
+    st.title("Deteksi Lowongan Kerja Palsu", anchor=False)
     st.markdown('<div class="subtitle">Analisis instan keandalan lowongan kerja berdasarkan pola struktural dan kelengkapan informasi</div>', unsafe_allow_html=True)
     
     # We create the input form using columns
@@ -252,16 +252,16 @@ def show_predictor_page(model, encoders):
                 if prediction == 0:
                     real_prob = probabilities[0] * 100
                     st.markdown(f"""<div class="result-card-real">
-<h3 style="color: #10b981; margin: 0 0 10px 0; font-weight: 700;">LOWONGAN KERJA INI VALID / ASLI</h3>
-<p style="margin: 0; color: #e2e8f0; font-size: 1.1rem;">
+<h3 style="color: #0a6e00; margin: 0 0 10px 0; font-weight: 700;">LOWONGAN KERJA INI VALID / ASLI</h3>
+<p style="margin: 0; color: #3e4a38; font-size: 1.1rem;">
 Model memprediksi dengan tingkat keyakinan <strong>{real_prob:.2f}%</strong> bahwa lowongan ini aman dan terpercaya.
 </p>
 </div>""", unsafe_allow_html=True)
                 else:
                     fake_prob = probabilities[1] * 100
                     st.markdown(f"""<div class="result-card-fake">
-<h3 style="color: #f43f5e; margin: 0 0 10px 0; font-weight: 700;">PERINGATAN: LOWONGAN KERJA TERINDIKASI PALSU / FRAUD</h3>
-<p style="margin: 0; color: #e2e8f0; font-size: 1.1rem;">
+<h3 style="color: #ba1a1a; margin: 0 0 10px 0; font-weight: 700;">PERINGATAN: LOWONGAN KERJA TERINDIKASI PALSU / FRAUD</h3>
+<p style="margin: 0; color: #3e4a38; font-size: 1.1rem;">
 Model memprediksi dengan tingkat keyakinan <strong>{fake_prob:.2f}%</strong> bahwa lowongan ini memiliki kecocokan pola penipuan.
 </p>
 </div>""", unsafe_allow_html=True)
