@@ -1,0 +1,14 @@
+[server]
+# Exclude heavy folders from Streamlit file watcher to prevent high CPU usage and lag
+folderWatchBlacklist = ["venv", ".venv", "env", ".git"]
+gatherUsageStats = false
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+primaryColor = "#14a800"
+backgroundColor = "#f9f9f9"
+secondaryBackgroundColor = "#f3f3f3"
+textColor = "#001e00"
+font = "sans serif"
