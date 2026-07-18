@@ -1,6 +1,8 @@
 # Proyek UAS Data Mining - Deteksi Lowongan Kerja Palsu
 
-Proyek ini dibuat untuk memenuhi tugas UAS mata kuliah **Data Mining** di Universitas Alma Ata. Di sini, kita mengembangkan model machine learning untuk membedakan mana lowongan kerja yang asli dan mana yang terindikasi palsu. Model terbaik yang kita dapatkan kemudian dipasang ke aplikasi web interaktif menggunakan Streamlit supaya mudah dicoba langsung.
+Proyek ini dibuat untuk memenuhi tugas UAS mata kuliah **Data Mining** di Universitas Alma Ata. Di sini, kita mengembangkan model machine learning untuk membedakan mana lowongan kerja yang asli dan mana yang terindikasi palsu (fraudulent). Model terbaik yang kita dapatkan kemudian dipasang ke aplikasi web interaktif menggunakan Streamlit supaya mudah dicoba langsung.
+
+Di branch `reborn` ini, kami telah menerapkan perbaikan metodologi yang ketat: menggunakan **Train-Test Split sebelum balancing**, membandingkan 9 skenario eksperimen dengan **5-Fold Stratified Cross-Validation**, serta menggunakan objek **Pipeline terpadu** untuk penyederhanaan deployment.
 
 ---
 
@@ -22,53 +24,66 @@ Datanya **sangat jomplang (tidak seimbang)**. Kalau kita langsung buat model dar
 
 ---
 
-## Data Preparation
-Langkah-langkah yang kita lakukan di berkas notebook:
-1.  **Buang Kolom Tidak Penting**: Kolom seperti job_id, title (karena terlalu acak), serta salary_range dan department (karena isinya banyak yang kosong) kita hapus.
-2.  **Ubah Teks Jadi Angka & Ukuran**: 
-    *   Kita ambil kode negara saja dari lokasi lowongan.
-    *   Teks deskripsi, profil, persyaratan, dan benefit kita ukur panjang karakternya. Kita juga buat penanda (0 jika kosong, 1 jika ada isinya).
-3.  **Mengatasi Data Jomplang (Random Undersampling)**:
-    *   Kita ambil seluruh **866 data lowongan palsu**.
-    *   Lalu, kita ambil acak **866 data lowongan asli** untuk keseimbangan.
-    *   Sekarang data kita pas 50:50 dengan total **1.732 data** yang siap dilatih.
+## Data Preparation & Feature Engineering
+Untuk membekali model dengan pola struktural kelengkapan postingan lowongan kerja tanpa NLP, kami merekayasa fitur-fitur berikut:
+1.  `has_company_profile`, `has_requirements`, `has_benefits` (Keberadaan teks info)
+2.  `has_salary_range` (Keberadaan rentang gaji)
+3.  `has_department` (Keberadaan departemen)
+4.  `description_length`, `requirements_length`, `benefits_length`, `company_profile_length`, `title_length` (Panjang karakter teks)
+5.  `completeness_score` (Rasio kelengkapan informasi, range 0.0 - 1.0)
+6.  `missing_count` (Jumlah informasi kosong)
+
+Proses pemisahan data latih (80%) dan data uji (20%) dilakukan **sebelum** balancing secara stratifikasi. Hal ini menjaga agar data uji tetap menggambarkan distribusi asli yang timpang (~95:5) demi validitas evaluasi.
 
 ---
 
-## Hasil Percobaan Model ( Modeling & Evaluation )
-Kita bagi data menjadi 80% untuk latihan model (1.385 data) dan 20% untuk pengujian (347 data). Kita coba melatih dan membandingkan 3 algoritma:
+## Hasil Percobaan Model (Modeling & Evaluation)
+Kami melatih 3 algoritma dengan 3 skenario penanganan data jomplang pada training set (total 9 eksperimen) dan mengevaluasinya menggunakan 5-Fold Stratified Cross-Validation:
 
-*   **Random Forest** (Akurasi: 91.93%, F1-Score: 91.95%, Recall: 92.49%) -> **Pilihan Terbaik**
-*   **Decision Tree** (Akurasi: 87.90%, F1-Score: 88.00%)
-*   **Logistic Regression** (Akurasi: 77.81%, F1-Score: 77.01%)
+| Model | Strategi Imbalance | Precision (Fake) | Recall (Fake) | F1-Score (Fake) | PR-AUC |
+| :--- | :--- | :---: | :---: | :---: | :---: |
+| **Logistic Regression** | Original | 71.02% | 30.60% | 42.53% | 0.5578 |
+| | Class Weight | 26.12% | 87.41% | 40.22% | 0.4740 |
+| | Undersampling | 22.84% | 86.95% | 36.17% | 0.4229 |
+| **Decision Tree** | Original | 67.61% | 68.83% | 68.12% | 0.4805 |
+| | Class Weight | 66.58% | 71.24% | 68.82% | 0.4895 |
+| | Undersampling | 22.72% | 88.34% | 36.13% | 0.2064 |
+| **Random Forest** | Original | 97.31% | 62.24% | 75.90% | 0.8904 |
+| | Class Weight | 97.36% | 61.67% | 75.46% | 0.8809 |
+| | **Undersampling (Selected)** | **32.61%** | **92.38%** | **48.20%** | **0.7703** |
 
-### Mengapa Random Forest?
-Model Random Forest terbukti paling tinggi akurasinya. Nilai **Recall-nya mencapai 92.49%**, yang berarti model ini bisa mendeteksi 92% lowongan palsu yang diuji. Di dunia nyata, kepekaan mendeteksi lowongan palsu adalah hal terpenting agar tidak ada korban penipuan yang lolos.
+### Mengapa Random Forest dengan Undersampling?
+Kami memilih **Random Forest dengan strategi Undersampling (Strategy C)** karena memberikan tingkat **Recall (sensitivitas) tertinggi sebesar 92.38%** pada data training. Nilai Recall yang tinggi sangat penting bagi sistem keamanan lowongan kerja agar tidak ada korban penipuan yang lolos.
 
-Tiga fitur yang paling mempengaruhi keputusan model adalah:
-1. Ada tidaknya logo perusahaan (has_company_logo)
-2. Panjang tulisan profil perusahaan (company_profile_length)
-3. Panjang deskripsi pekerjaan (description_length)
+### Evaluasi Final pada Data Uji Asli (Test Set)
+Model final yang telah dituning menunjukkan performa luar biasa pada data uji riil yang imbalanced:
+*   **Akurasi Keseluruhan** : **90.18%**
+*   **Precision (Fake)** : **32.27%**
+*   **Recall (Fake)** : **93.64%** (Model berhasil menangkap 93.64% lowongan palsu pada populasi riil)
+*   **F1-Score (Fake)** : **48.00%**
+*   **PR-AUC** : **78.11%**
 
 ---
 
 ## Cara Menjalankan Aplikasi
 
 ### 1. Install Library
-Ketik perintah ini di Terminal / CMD untuk menginstal pustaka yang dibutuhkan :
+Ketik perintah ini di Terminal / CMD untuk menginstal pustaka yang dibutuhkan:
 ```bash
 pip install -r requirements.txt
 ```
 
 ### 2. Jalankan Aplikasi
-Jalankan perintah berikut :
+Jalankan perintah berikut:
 ```bash
 streamlit run app.py
 ```
-Aplikasi akan otomatis terbuka di browser  pada alamat `http://localhost:8501`.
+Aplikasi akan otomatis terbuka di browser Anda pada alamat `http://localhost:8501`.
 
 ### Struktur File Proyek
-*   `notebooks/Klasifikasi_Lowongan_Asli_Palsu.ipynb` File notebook pengerjaan analisis lengkap dari awal sampai akhir.
-*   `models/`  Folder penyimpanan model (`model_random_forest.joblib`) dan encoder kategori (`encoder_kategori.joblib`).
-*   `app.py`  File utama untuk menjalankan web Streamlit.
-*   `requirements.txt`  Daftar dependensi pustaka Python.
+*   `notebooks/Klasifikasi_Lowongan_Asli_Palsu.ipynb` - File notebook pengerjaan analisis lengkap dari awal sampai akhir.
+*   `models/model_pipeline.joblib` - Objek Pipeline Scikit-Learn tunggal berisi preprocessor dan model klasifikasi.
+*   `app.py` - File utama untuk menjalankan web Streamlit.
+*   `frontend/` - Folder komponen UI modular (views, styles).
+*   `implementasi.md` - Laporan tertulis hasil pengerjaan CRISP-DM.
+*   `requirements.txt` - Daftar dependensi pustaka Python.

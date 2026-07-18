@@ -12,7 +12,6 @@ emp_translation = {
     'Other': 'Lainnya (Other)',
     'Unspecified': 'Tidak Ditentukan (Unspecified)'
 }
-reverse_emp = {v: k for k, v in emp_translation.items()}
 
 exp_translation = {
     'Entry level': 'Tingkat Pemula (Entry Level)',
@@ -24,7 +23,6 @@ exp_translation = {
     'Not Applicable': 'Tidak Terkait (Not Applicable)',
     'Unspecified': 'Tidak Ditentukan (Unspecified)'
 }
-reverse_exp = {v: k for k, v in exp_translation.items()}
 
 edu_translation = {
     'High School or equivalent': 'SMA / Sederajat (High School)',
@@ -37,7 +35,6 @@ edu_translation = {
     'Some College Coursework Completed': 'Kuliah Belum Lulus',
     'Unspecified': 'Tidak Ditentukan (Unspecified)'
 }
-reverse_edu = {v: k for k, v in edu_translation.items()}
 
 country_translation = {
     'AE': 'Uni Emirat Arab (AE)',
@@ -136,70 +133,99 @@ country_translation = {
 def get_country_display(code):
     return country_translation.get(code, f"{code} ({code})")
 
-def show_predictor_page(model, encoders):
-    """Renders the prediction page using the original Streamlit form layout."""
+def show_predictor_page(pipeline):
+    """Renders the prediction page using the pipeline models and custom UI styling."""
     
     st.title("Deteksi Lowongan Kerja Palsu", anchor=False)
     st.markdown('<div class="subtitle">Analisis instan keandalan lowongan kerja berdasarkan pola struktural dan kelengkapan informasi</div>', unsafe_allow_html=True)
     
-    # We create the input form using columns
+    # Extract options dynamically from pipeline preprocessor categories
+    categories = pipeline.named_steps['preprocessor'].named_transformers_['cat'].categories_
+    country_options = list(categories[0])
+    emp_options = list(categories[1])
+    exp_options = list(categories[2])
+    edu_options = list(categories[3])
+    ind_options = list(categories[4])
+    func_options = list(categories[5])
+
+    # We create the input form using containers
     with st.container():
         st.markdown('<div class="glass-card-marker"></div>', unsafe_allow_html=True)
+        
+        # Job Title Input at the top
+        title_input = st.text_input("Judul Pekerjaan (Job Title)", value="", placeholder="Contoh: Senior Software Engineer / Staff Administrasi")
+        title_length = len(title_input)
+        
+        st.markdown('<div class="form-divider"></div>', unsafe_allow_html=True)
         
         col1, col2 = st.columns(2, gap="large")
         
         with col1:
             st.markdown('<div class="form-section-title">Kategori & Karakteristik Struktural</div>', unsafe_allow_html=True)
             
-            # Categories loaded dynamically from label encoders
-            country_options = list(encoders['country'].classes_)
+            # Country Display
             country_display_options = [get_country_display(c) for c in country_options]
             selected_country_display = st.selectbox(
                 "Negara Lokasi Kerja", 
                 options=country_display_options, 
-                index=country_options.index('US') if 'US' in country_options else 0
+                index=country_display_options.index(get_country_display('US')) if get_country_display('US') in country_display_options else 0
             )
-            # Map back to raw code
-            country = next(k for k, v in country_translation.items() if v == selected_country_display) if selected_country_display in country_translation.values() else selected_country_display.split(' ')[-1].replace('(', '').replace(')', '')
+            selected_country = country_options[country_display_options.index(selected_country_display)]
             
-            emp_options = list(encoders['employment_type'].classes_)
+            # Employment Type
             emp_display_options = [emp_translation.get(e, e) for e in emp_options]
             selected_emp_display = st.selectbox(
                 "Jenis Pekerjaan (Employment Type)", 
                 options=emp_display_options, 
-                index=emp_display_options.index(emp_translation['Full-time']) if 'Full-time' in emp_options else 0
+                index=emp_display_options.index(emp_translation.get('Full-time', 'Full-time')) if 'Full-time' in emp_options else 0
             )
-            employment_type = reverse_emp.get(selected_emp_display, selected_emp_display)
+            selected_employment = emp_options[emp_display_options.index(selected_emp_display)]
             
-            exp_options = list(encoders['required_experience'].classes_)
+            # Required Experience
             exp_display_options = [exp_translation.get(e, e) for e in exp_options]
-            selected_exp_display = st.selectbox("Pengalaman Kerja Minimal", options=exp_display_options)
-            required_experience = reverse_exp.get(selected_exp_display, selected_exp_display)
+            selected_exp_display = st.selectbox(
+                "Pengalaman Kerja Minimal", 
+                options=exp_display_options, 
+                index=exp_display_options.index(exp_translation.get('Unspecified', 'Unspecified')) if 'Unspecified' in exp_options else 0
+            )
+            selected_experience = exp_options[exp_display_options.index(selected_exp_display)]
             
-            edu_options = list(encoders['required_education'].classes_)
+            # Required Education
             edu_display_options = [edu_translation.get(e, e) for e in edu_options]
-            selected_edu_display = st.selectbox("Pendidikan Minimal", options=edu_display_options)
-            required_education = reverse_edu.get(selected_edu_display, selected_edu_display)
+            selected_edu_display = st.selectbox(
+                "Pendidikan Minimal", 
+                options=edu_display_options, 
+                index=edu_display_options.index(edu_translation.get('Unspecified', 'Unspecified')) if 'Unspecified' in edu_options else 0
+            )
+            selected_education = edu_options[edu_display_options.index(selected_edu_display)]
             
-            ind_options = list(encoders['industry'].classes_)
-            industry = st.selectbox("Kategori Industri", options=ind_options)
-            
-            func_options = list(encoders['function'].classes_)
-            function = st.selectbox("Fungsi / Bidang Pekerjaan", options=func_options)
+            # Industry & Function
+            selected_industry = st.selectbox(
+                "Kategori Industri", 
+                options=ind_options, 
+                index=ind_options.index('Unspecified') if 'Unspecified' in ind_options else 0
+            )
+            selected_function = st.selectbox(
+                "Fungsi / Bidang Pekerjaan", 
+                options=func_options, 
+                index=func_options.index('Unspecified') if 'Unspecified' in func_options else 0
+            )
             
         with col2:
             st.markdown('<div class="form-section-title">Fasilitas & Kelengkapan Profil</div>', unsafe_allow_html=True)
             
-            # Checkbox columns (2 columns of 3 checkboxes each for a cleaner, un-wrapped look)
+            # Checkbox columns: 2 columns of 4 checkboxes for balanced UI look
             check_col1, check_col2 = st.columns(2)
             with check_col1:
                 telecommuting = st.checkbox("Mendukung Remote / WFH", value=False)
                 has_company_logo = st.checkbox("Memiliki Logo Perusahaan", value=False)
                 has_questions = st.checkbox("Memiliki Pertanyaan Screening", value=False)
+                has_department = st.checkbox("Ada Departemen Tertera", value=False)
             with check_col2:
                 has_company_profile = st.checkbox("Memiliki Profil Perusahaan", value=False)
                 has_requirements = st.checkbox("Memiliki Persyaratan Kerja", value=False)
                 has_benefits = st.checkbox("Memiliki Fasilitas / Benefit", value=False)
+                has_salary_range = st.checkbox("Ada Gaji Tertera", value=False)
                 
             st.markdown('<div class="form-divider"></div>', unsafe_allow_html=True)
             st.markdown('<div class="form-section-title">Estimasi Panjang Karakter Informasi</div>', unsafe_allow_html=True)
@@ -208,7 +234,32 @@ def show_predictor_page(model, encoders):
             requirements_length = st.slider("Panjang Karakter Persyaratan Kerja", min_value=0, max_value=4000, value=0, step=50, disabled=not has_requirements)
             benefits_length = st.slider("Panjang Karakter Benefit Pekerjaan", min_value=0, max_value=3000, value=0, step=50, disabled=not has_benefits)
             company_profile_length = st.slider("Panjang Karakter Profil Perusahaan", min_value=0, max_value=4000, value=0, step=50, disabled=not has_company_profile)
+            
+            # Failsafes: reset lengths if checkboxes are unchecked
+            if not has_company_profile:
+                company_profile_length = 0
+            if not has_requirements:
+                requirements_length = 0
+            if not has_benefits:
+                benefits_length = 0
         
+        st.markdown('<div class="form-divider"></div>', unsafe_allow_html=True)
+        
+        # Calculate completeness score and missing count dynamically
+        info_presence = [
+            1 if has_company_profile else 0,
+            1 if has_salary_range else 0,
+            1 if has_requirements else 0,
+            1 if has_benefits else 0,
+            1 if selected_employment != 'Unspecified' else 0,
+            1 if selected_experience != 'Unspecified' else 0,
+            1 if selected_education != 'Unspecified' else 0,
+            1 if selected_industry != 'Unspecified' else 0,
+            1 if selected_function != 'Unspecified' else 0
+        ]
+        completeness_score = sum(info_presence) / 9.0
+        missing_count = 9 - sum(info_presence)
+
         # Trigger button
         predict_btn = st.button("Menganalisis Keaslian Lowongan")
         
@@ -216,37 +267,34 @@ def show_predictor_page(model, encoders):
             with st.spinner("Menganalisis pola karakteristik lowongan kerja..."):
                 time.sleep(1.0) # Simulation for premium feel
                 
-                # Transform inputs using label encoders
-                encoded_country = encoders['country'].transform([country])[0]
-                encoded_employment = encoders['employment_type'].transform([employment_type])[0]
-                encoded_experience = encoders['required_experience'].transform([required_experience])[0]
-                encoded_education = encoders['required_education'].transform([required_education])[0]
-                encoded_industry = encoders['industry'].transform([industry])[0]
-                encoded_function = encoders['function'].transform([function])[0]
-                
                 # Format into input DataFrame with EXACT order and names as training columns
                 input_df = pd.DataFrame([{
                     'telecommuting': 1 if telecommuting else 0,
                     'has_company_logo': 1 if has_company_logo else 0,
                     'has_questions': 1 if has_questions else 0,
-                    'employment_type': encoded_employment,
-                    'required_experience': encoded_experience,
-                    'required_education': encoded_education,
-                    'industry': encoded_industry,
-                    'function': encoded_function,
-                    'country': encoded_country,
+                    'employment_type': selected_employment,
+                    'required_experience': selected_experience,
+                    'required_education': selected_education,
+                    'industry': selected_industry,
+                    'function': selected_function,
+                    'country': selected_country,
                     'has_company_profile': 1 if has_company_profile else 0,
                     'has_requirements': 1 if has_requirements else 0,
                     'has_benefits': 1 if has_benefits else 0,
+                    'has_salary_range': 1 if has_salary_range else 0,
+                    'has_department': 1 if has_department else 0,
                     'description_length': description_length,
                     'requirements_length': requirements_length,
                     'benefits_length': benefits_length,
-                    'company_profile_length': company_profile_length
+                    'company_profile_length': company_profile_length,
+                    'title_length': title_length,
+                    'completeness_score': completeness_score,
+                    'missing_count': missing_count
                 }])
                 
                 # Predict
-                prediction = model.predict(input_df)[0]
-                probabilities = model.predict_proba(input_df)[0]
+                prediction = pipeline.predict(input_df)[0]
+                probabilities = pipeline.predict_proba(input_df)[0]
                 
                 st.markdown("### Hasil Analisis Model:")
                 if prediction == 0:
