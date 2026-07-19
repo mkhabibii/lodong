@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import time
 
-# --- KAMUS TRANSLASI DROPDOWN KE BAHASA INDONESIA ---
+# TRANSLASI DROPDOWN KE BAHASA INDONESIA ---
 emp_translation = {
     'Full-time': 'Penuh Waktu (Full-time)',
     'Part-time': 'Paruh Waktu (Part-time)',
@@ -152,8 +152,35 @@ def show_predictor_page(pipeline):
     with st.container():
         st.markdown('<div class="glass-card-marker"></div>', unsafe_allow_html=True)
         
-        # Job Title Input at the top
-        title_input = st.text_input("Judul Pekerjaan (Job Title)", value="", placeholder="Contoh: Senior Software Engineer / Staff Administrasi")
+        # Opsi A: Metode Hybrid Autocomplete / Text Selectbox + Manual Input
+        popular_titles = sorted([
+            "Software Engineer", "English Teacher Abroad", "Customer Service Associate",
+            "Account Manager", "Web Developer", "Project Manager", "Administrative Assistant",
+            "Product Manager", "Office Manager", "Marketing Manager", "Sales Representative",
+            "iOS Developer", "Senior Software Engineer", "Web Designer", "Account Executive",
+            "Customer Service Team Lead", "Front End Developer", "Sales Manager",
+            "Software Developer", "Android Developer", "Data Scientist", "Data Analyst",
+            "Financial Analyst", "Recruiter", "Human Resources Manager"
+        ])
+        
+        # Selectbox dengan fitur pencarian bawaan Streamlit
+        selected_title_option = st.selectbox(
+            "Judul Pekerjaan (Job Title) - Pilih Populer atau Ketik Baru",
+            options=["Lainnya (Ketik Manual)..."] + popular_titles,
+            index=0,
+            help="Gunakan fitur pencarian pada pilihan untuk mencari judul pekerjaan populer. Jika tidak ada di daftar, pilih 'Lainnya (Ketik Manual)...' untuk mengetik judul pekerjaan baru."
+        )
+        
+        # Kondisi input manual jika memilih "Lainnya"
+        if selected_title_option == "Lainnya (Ketik Manual)...":
+            title_input = st.text_input(
+                "Masukkan Judul Pekerjaan Secara Manual",
+                value="",
+                placeholder="Contoh: Staff Administrasi Kantor / Backend Developer"
+            )
+        else:
+            title_input = selected_title_option
+            
         title_length = len(title_input)
         
         st.markdown('<div class="form-divider"></div>', unsafe_allow_html=True)
@@ -308,7 +335,7 @@ Model memprediksi dengan tingkat keyakinan <strong>{real_prob:.2f}%</strong> bah
                 else:
                     fake_prob = probabilities[1] * 100
                     st.markdown(f"""<div class="result-card-fake">
-<h3 style="color: #ba1a1a; margin: 0 0 10px 0; font-weight: 700;">PERINGATAN: LOWONGAN KERJA TERINDIKASI PALSU / FRAUD</h3>
+<h3 style="color: #ba1a1a; margin: 0 0 10px 0; font-weight: 700;">PERINGATAN ! LOWONGAN KERJA TERINDIKASI PALSU / FRAUD</h3>
 <p style="margin: 0; color: #3e4a38; font-size: 1.1rem;">
 Model memprediksi dengan tingkat keyakinan <strong>{fake_prob:.2f}%</strong> bahwa lowongan ini memiliki kecocokan pola penipuan.
 </p>

@@ -15,8 +15,8 @@ def inject_custom_css():
         }
         
         .stApp, section.main, .main, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
-            background: #ffffff !important;
-            background-color: #ffffff !important;
+            background: #f5f7f5 !important;
+            background-color: #f5f7f5 !important;
             color: #001e00 !important;
             overflow-x: hidden !important;
         }
@@ -72,19 +72,24 @@ def inject_custom_css():
         
         /* Navbar Styling */
         .custom-navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             background: #ffffff;
             border-bottom: 1px solid #e4ebe4;
-            padding: 15px 40px;
-            max-width: 1200px;
             z-index: 9999;
             position: fixed;
             top: 0;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 0;
             width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .navbar-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            width: 100%;
+            padding: 15px 40px;
         }
         .nav-logo {
             font-weight: 800;
@@ -92,6 +97,15 @@ def inject_custom_css():
             color: #14a800 !important;
             letter-spacing: 0.5px;
             text-decoration: none !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+        .nav-logo-img {
+            max-height: 35px !important; /* Batas tinggi logo di navbar */
+            width: auto !important;      /* Aspek rasio lebar otomatis */
+            max-width: 180px !important; /* Batas lebar maksimal agar tidak menggeser menu */
+            object-fit: contain !important;
+            display: block !important;
         }
         .nav-links {
             display: flex;
@@ -642,14 +656,28 @@ def inject_custom_css():
             }
             .mock-sim-card {
                 max-width: 100% !important;
-            }
+        }
+        
+        /* Footer Viewport Breakout Styling */
+        .custom-footer {
+            width: 100vw !important;
+            position: relative !important;
+            left: 50% !important;
+            margin-left: -50vw !important;
+            background: #ffffff !important;
+            border-top: 1px solid #e4ebe4 !important;
+            margin-top: 50px !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            z-index: 99 !important;
         }
     </style>
     """, unsafe_allow_html=True)
 
 def get_logo_base64():
-    """Reads the logo.png from root and returns its base64 string."""
-    logo_path = "logo.png"
+    """Reads the logo.png from assets/ and returns its base64 string."""
+    logo_path = "assets/logo.png"
     if os.path.exists(logo_path):
         try:
             with open(logo_path, "rb") as image_file:
@@ -666,11 +694,12 @@ def render_navbar(active_page="beranda"):
     
     logo_base64 = get_logo_base64()
     if logo_base64:
-        logo_html = f'<img src="data:image/png;base64,{logo_base64}" height="28" style="vertical-align: middle; max-height: 28px; display: block;"/>'
+        logo_html = f'<img src="data:image/png;base64,{logo_base64}" class="nav-logo-img" />'
     else:
         logo_html = 'LODONG'
         
     st.markdown(f"""<div class="custom-navbar">
+<div class="navbar-inner">
 <a href="?page=beranda" target="_self" class="nav-logo" style="display: flex; align-items: center; text-decoration: none !important;">{logo_html}</a>
 <div class="nav-links">
 <a href="?page=beranda" target="_self" class="nav-link {home_active}">Beranda</a>
@@ -678,21 +707,24 @@ def render_navbar(active_page="beranda"):
 <a href="?page=tentang" target="_self" class="nav-link {tentang_active}">Tentang</a>
 </div>
 <a href="?page=prediksi" target="_self" class="nav-btn">Cek Loker</a>
+</div>
 </div>""", unsafe_allow_html=True)
 
 def render_footer():
     """Renders the custom simplified footer containing only copyright and github repo link."""
     logo_base64 = get_logo_base64()
     if logo_base64:
-        logo_html = f'<img src="data:image/png;base64,{logo_base64}" height="20" style="vertical-align: middle; max-height: 20px; display: block;"/>'
+        logo_html = f'<img src="data:image/png;base64,{logo_base64}" class="nav-logo-img" style="max-height: 24px !important;" />'
     else:
         logo_html = '<span style="font-weight: 800; color: #14a800; font-family: \'Inter\', sans-serif;">LODONG</span>'
         
-    st.markdown(f"""<div class="custom-footer" style="display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 50px auto 0 auto; padding: 20px 40px; border-top: 1px solid #e4ebe4; background: #ffffff;">
+    st.markdown(f"""<div class="custom-footer">
+<div style="display: flex; justify-content: space-between; align-items: center; max-width: 1200px; width: 100%; padding: 20px 40px;">
 <div style="display: flex; align-items: center; gap: 10px;">
     {logo_html}
     <span style="color: #bdcbb3;">|</span>
     <span style="margin: 0; color: #6e7b67; font-size: 0.9rem; font-family: 'Inter', sans-serif;">Copyright Team LODONG 2026</span>
 </div>
 <a href="#" style="color: #6e7b67; text-decoration: none; font-size: 0.9rem; font-family: 'Inter', sans-serif;">Kebijakan Privasi</a>
+</div>
 </div>""", unsafe_allow_html=True)

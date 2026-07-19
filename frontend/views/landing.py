@@ -3,7 +3,7 @@ import streamlit as st
 def show_landing_page():
     """Renders the high-fidelity mock layout landing page matching the user's custom screenshot specification."""
     
-    # 1. Hero Section
+    # Hero Section
     st.markdown("""<div class="hero-container">
 <h1 class="hero-title">Cek Keaslian Lowongan Kerja dalam Sekali Klik</h1>
 <p class="hero-subtitle">Sistem kami mendeteksi potensi keaslian berdasarkan karakteristik informasi lowongan menggunakan Machine Learning untuk membantu Anda melakukan validasi mandiri sebelum memutuskan untuk melamar.</p>
@@ -18,7 +18,7 @@ def show_landing_page():
 </div>
 </div>""", unsafe_allow_html=True)
 
-    # 2. Features Section (Karakteristik yang Dianalisis)
+    # Features Section (Karakteristik yang Dianalisis)
     st.markdown("""<div style="text-align: center; margin-bottom: 50px;">
 <h2 class="main-title">Karakteristik yang Dianalisis</h2>
 <p class="subtitle">Model kami mengevaluasi berbagai fitur dari input lowongan kerja untuk menemukan pola indikasi keaslian.</p>
@@ -50,7 +50,7 @@ def show_landing_page():
     </div>
 </div>""", unsafe_allow_html=True)
 
-    # 3. How It Works Section
+    # How It Works Section
     col1, col2 = st.columns([1.1, 0.9])
     
     with col1:
@@ -114,7 +114,7 @@ def show_landing_page():
 </div>
 </div>""", unsafe_allow_html=True)
 
-    # 4. Green Stats Band
+    # Green Stats Band
     st.markdown("""<div class="green-stats-band">
     <div class="stat-band-item">
         <h3>17,000+</h3>
@@ -130,7 +130,7 @@ def show_landing_page():
     </div>
 </div>""", unsafe_allow_html=True)
 
-    # 5. Call to Action Box
+    # Call to Action Box
     st.markdown("""<div class="cta-card-box">
     <h2 class="cta-card-title">Mulai Analisis Mandiri</h2>
     <p class="cta-card-desc">Gunakan instrumen identifikasi berbasis data untuk membantu Anda mengenali karakteristik lowongan kerja sebelum memberikan data pribadi.</p>

@@ -1,0 +1,20 @@
+Kelompok Lodong (Loker Bodong)
+Pembagian Kontribusi Proyek UAS Data Mining:
+
+1. Muhammad Khoerul Habibi (233200290) sebagai Data & Modeling Expert
+   Bertanggung jawab atas eksperimen data dan kecerdasan buatan
+   - Menyusun tahapan CRISP-DM pada notebook analisis data.
+   - Melatih dan menata model Random Forest serta menerapkan strategi Undersampling untuk mengatasi jomplangnya data loker asli vs palsu.
+   - Mengekspor model final yang peka mendeteksi loker bodong menjadi berkas model_pipeline.joblib.
+
+2. Kholil Mustofa (233200284) sebagai Streamlit Developer
+   Bertanggung jawab atas visualisasi dan pembuatan aplikasi web interaktif 
+   - Merancang tampilan web app Streamlit modern dengan arsitektur modular.
+   - Menghubungkan form input kelengkapan profil perusahaan ke pipeline prediksi model agar bisa menganalisis data loker secara instan.
+   - Mengatur navigasi halaman (Routing) mulai dari Dashboard, halaman Prediksi, hingga profil Tim Pengembang.
+
+3. Faiz Faturrahman (233200278) sebagai Quality Assurance & Documenter
+   Bertanggung jawab atas validasi sistem, narasi penjelasan, dan berkas akhir 
+   - Mengisi penjelasan metodologis dan kesimpulan evaluasi model di dalam markdown notebook.
+   - Menguji keandalan aplikasi web app (termasuk simulasi prediksi formulir kosong dan pengujian negara bias) agar aplikasi berjalan lancar tanpa bug.
+   - Menyusun berkas-berkas laporan pengumpulan UAS seperti README.md dan panduan implementasi yang ada di github

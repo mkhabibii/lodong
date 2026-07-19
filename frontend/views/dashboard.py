@@ -27,7 +27,7 @@ def show_dashboard_page():
     
     df, is_loaded = load_dataset()
     
-    # --- KPI METRICS CARDS (Glassmorphism) ---
+    # KPI METRICS CARDS
     st.markdown("##### **Ringkasan Informasi Dataset**")
     
     col1, col2, col3, col4 = st.columns(4)
@@ -82,7 +82,7 @@ def show_dashboard_page():
 
     st.markdown("---")
 
-    # --- CHARTS SECTION ---
+    #  CHARTS SECTION 
     c1, c2 = st.columns(2)
     
     with c1:
