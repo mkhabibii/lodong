@@ -1,7 +1,23 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
 import time
+import os
+
+# Integrasi gemini flash (Lazy loading untuk mempercepat loading/page switch)
+HAS_GENAI = None
+
+def check_genai_available():
+    global HAS_GENAI
+    if HAS_GENAI is None:
+        try:
+            import google.generativeai as genai
+            HAS_GENAI = True
+        except ImportError:
+            HAS_GENAI = False
+    return HAS_GENAI
+
+# Konfigurasi Akses Gemini API
+GEMINI_MODEL_NAME = "gemini-3.1-flash-lite"
+
 
 # TRANSLASI DROPDOWN KE BAHASA INDONESIA ---
 emp_translation = {
@@ -133,8 +149,101 @@ country_translation = {
 def get_country_display(code):
     return country_translation.get(code, f"{code} ({code})")
 
+def generate_xai_explanation(prediction, probability, input_data):
+    """
+    Fungsi untuk mengirim data karakteristik ke Gemini 
+    dan mendapatkan penjelasan bahasa Indonesia yang logis (XAI).
+    """
+    if not check_genai_available():
+        return "⚠️ Pustaka `google-generativeai` belum diinstal. Jalankan `pip install google-generativeai` untuk menggunakan fitur XAI ini."
+        
+    import google.generativeai as genai
+    
+    # Mengambil API key
+    api_key_to_use = ""
+    try:
+        if "GEMINI_API_KEY" in st.secrets:
+            api_key_to_use = st.secrets["GEMINI_API_KEY"]
+    except Exception:
+        pass
+        
+    if not api_key_to_use:
+        api_key_to_use = os.environ.get("GEMINI_API_KEY", "")
+        
+    if not api_key_to_use:
+        return "⚠️ API Key Gemini belum dikonfigurasi. Silakan buat file `.streamlit/secrets.toml` dan isi dengan `GEMINI_API_KEY = \"API_KEY_ANDA\"` untuk mengaktifkan penjelasan XAI."
+        
+    try:
+        genai.configure(api_key=api_key_to_use)
+        
+        # Tentukan label teks prediksi
+        label_prediksi = "PALSU (Terindikasi Penipuan)" if prediction == 1 else "ASLI (Valid)"
+        persen_keyakinan = f"{probability:.2f}%"
+        
+        # Buat ringkasan kelengkapan informasi sebagai bukti
+        bukti_list = []
+        bukti_list.append(f"- Judul lowongan kerja: '{input_data['title']}'")
+        
+        if input_data['has_company_logo'] == 0:
+            bukti_list.append("- Postingan tidak mencantumkan logo perusahaan.")
+        else:
+            bukti_list.append("- Postingan mencantumkan logo resmi perusahaan.")
+            
+        if input_data['has_company_profile'] == 0:
+            bukti_list.append("- Profil/sejarah singkat perusahaan dikosongkan.")
+        else:
+            bukti_list.append(f"- Profil perusahaan dicantumkan sepanjang {input_data['company_profile_length']} karakter.")
+            
+        if input_data['description_length'] < 300:
+            bukti_list.append(f"- Teks deskripsi pekerjaan sangat singkat (hanya {input_data['description_length']} karakter).")
+        else:
+            bukti_list.append(f"- Deskripsi pekerjaan ditulis cukup lengkap ({input_data['description_length']} karakter).")
+            
+        if input_data['has_requirements'] == 0:
+            bukti_list.append("- Persyaratan kerja untuk pelamar dikosongkan.")
+        else:
+            bukti_list.append(f"- Persyaratan kerja ditulis sepanjang {input_data['requirements_length']} karakter.")
+            
+        if input_data['has_salary_range'] == 0:
+            bukti_list.append("- Informasi rentang gaji tidak dicantumkan.")
+        else:
+            bukti_list.append("- Informasi rentang gaji dicantumkan.")
+            
+        if input_data['has_benefits'] == 0:
+            bukti_list.append("- Informasi fasilitas/benefit bagi karyawan tidak dicantumkan.")
+        else:
+            bukti_list.append("- Informasi fasilitas/benefit bagi karyawan dicantumkan.")
+            
+        bukti_list.append(f"- Tingkat kelengkapan informasi postingan lowongan kerja: {input_data['completeness_score'] * 100:.1f}%")
+            
+        bukti_str = "\n".join(bukti_list)
+        
+        # Prompt 
+        prompt = f"""
+        Kamu adalah asisten ahli keamanan informasi dan analisis lowongan kerja. 
+        Tolong jelaskan secara singkat dan logis kepada pencari kerja mengapa sistem klasifikasi 
+        kami memprediksi lowongan ini sebagai {label_prediksi} dengan tingkat keyakinan {persen_keyakinan} 
+        berdasarkan bukti karakteristik berikut:
+        {bukti_str}
+        
+        Aturan Penulisan:
+        1. Tulis penjelasan dalam 4-5 kalimat saja menggunakan bahasa Indonesia yang ramah, santai namun tetap profesional (human-written style).
+        2. Jangan pernah gunakan kata ganti "kita", melainkan selalu gunakan kata ganti "kami".
+        3. Jangan terdengar seperti robot atau template AI yang kaku.
+        4. Di akhir kalimat, berikan 3 tips keamanan singkat yang relevan bagi pelamar kerja. Tampilkan dalam bentuk per point jika banyak tips keamanan.
+        """
+        
+        # Panggil model Gemini
+        model = genai.GenerativeModel(GEMINI_MODEL_NAME)
+        response = model.generate_content(prompt)
+        return response.text.strip()
+        
+    except Exception as e:
+        return f"Gagal memuat penjelasan AI: {str(e)}"
+
 def show_predictor_page(pipeline):
     """Renders the prediction page using the pipeline models and custom UI styling."""
+    import pandas as pd
     
     st.title("Deteksi Lowongan Kerja Palsu", anchor=False)
     st.markdown('<div class="subtitle">Analisis instan keandalan lowongan kerja berdasarkan pola struktural dan kelengkapan informasi</div>', unsafe_allow_html=True)
@@ -176,7 +285,7 @@ def show_predictor_page(pipeline):
             title_input = st.text_input(
                 "Masukkan Judul Pekerjaan Secara Manual",
                 value="",
-                placeholder="Contoh: Staff Administrasi Kantor / Backend Developer"
+                placeholder="Contoh : Staff Administrasi Kantor / Backend Developer"
             )
         else:
             title_input = selected_title_option
@@ -202,7 +311,7 @@ def show_predictor_page(pipeline):
             # Employment Type
             emp_display_options = [emp_translation.get(e, e) for e in emp_options]
             selected_emp_display = st.selectbox(
-                "Jenis Pekerjaan (Employment Type)", 
+                "Jenis Pekerjaan", 
                 options=emp_display_options, 
                 index=emp_display_options.index(emp_translation.get('Full-time', 'Full-time')) if 'Full-time' in emp_options else 0
             )
@@ -288,7 +397,7 @@ def show_predictor_page(pipeline):
         missing_count = 9 - sum(info_presence)
 
         # Trigger button
-        predict_btn = st.button("Menganalisis Keaslian Lowongan")
+        predict_btn = st.button("Analisis Lowongan")
         
         if predict_btn:
             with st.spinner("Menganalisis pola karakteristik lowongan kerja..."):
@@ -340,3 +449,26 @@ Model memprediksi dengan tingkat keyakinan <strong>{real_prob:.2f}%</strong> bah
 Model memprediksi dengan tingkat keyakinan <strong>{fake_prob:.2f}%</strong> bahwa lowongan ini memiliki kecocokan pola penipuan.
 </p>
 </div>""", unsafe_allow_html=True)
+
+                # --- INTEGRASI EXPLAINABLE AI (XAI) ---
+                st.markdown("---")
+                st.markdown("### Analisis Karakteristik ( AI Explanation )")
+                
+                with st.spinner("AI sedang merumuskan penjelasan analisis..."):
+                    data_bukti = {
+                        'title': title_input,
+                        'has_company_logo': 1 if has_company_logo else 0,
+                        'has_company_profile': 1 if has_company_profile else 0,
+                        'description_length': description_length,
+                        'has_requirements': 1 if has_requirements else 0,
+                        'requirements_length': requirements_length,
+                        'company_profile_length': company_profile_length,
+                        'has_salary_range': 1 if has_salary_range else 0,
+                        'has_benefits': 1 if has_benefits else 0,
+                        'completeness_score': completeness_score
+                    }
+                    
+                    prob_nilai = probabilities[1] * 100 if prediction == 1 else probabilities[0] * 100
+                    penjelasan_ai = generate_xai_explanation(prediction, prob_nilai, data_bukti)
+                    
+                    st.info(penjelasan_ai)

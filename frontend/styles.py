@@ -675,6 +675,7 @@ def inject_custom_css():
     </style>
     """, unsafe_allow_html=True)
 
+@st.cache_data
 def get_logo_base64():
     """Reads the logo.png from assets/ and returns its base64 string."""
     logo_path = "assets/logo.png"
