@@ -1,11 +1,11 @@
-pandas
+pandas==2.3.3
 openpyxl
-numpy
+numpy==1.26.4
 matplotlib
 seaborn
 missingno
-scikit-learn
+scikit-learn==1.6.1
 streamlit
-joblib
+joblib==1.5.3
 ipython
 google-generativeai
